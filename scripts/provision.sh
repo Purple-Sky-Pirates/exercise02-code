@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/Users/dan/Applications/bin/bash5
 
 echo "###############################################################################"
 echo "#  MAKE SURE YOU ARE LOGGED IN:                                               #"
@@ -134,50 +134,51 @@ done
 # CONFIGURATION                                                                #
 ################################################################################
 
-LOGGEDIN_USER=$(oc $ARG_OC_OPS whoami)
+OC_COMMAND="/Users/dan/Applications/bin/oc422"
+LOGGEDIN_USER=$($OC_COMMAND $ARG_OC_OPS whoami)
 OPENSHIFT_USER=${ARG_USERNAME:-$LOGGEDIN_USER}
 PRJ_SUFFIX=${ARG_PROJECT_SUFFIX:-`echo $OPENSHIFT_USER | sed -e 's/[-@].*//g'`}
 GITHUB_ACCOUNT=${GITHUB_ACCOUNT:-siamaksade}
 GITHUB_REF=${GITHUB_REF:-ocp-4.2}
 
 function deploy() {
-  oc $ARG_OC_OPS new-project dev-$PRJ_SUFFIX   --display-name="Tasks - Dev"
-  oc $ARG_OC_OPS new-project stage-$PRJ_SUFFIX --display-name="Tasks - Stage"
-  oc $ARG_OC_OPS new-project cicd-$PRJ_SUFFIX  --display-name="CI/CD"
+  $OC_COMMAND $ARG_OC_OPS new-project dev-$PRJ_SUFFIX   --display-name="Tasks - Dev"
+  $OC_COMMAND $ARG_OC_OPS new-project stage-$PRJ_SUFFIX --display-name="Tasks - Stage"
+  $OC_COMMAND $ARG_OC_OPS new-project cicd-$PRJ_SUFFIX  --display-name="CI/CD"
 
   sleep 2
 
-  oc $ARG_OC_OPS policy add-role-to-group edit system:serviceaccounts:cicd-$PRJ_SUFFIX -n dev-$PRJ_SUFFIX
-  oc $ARG_OC_OPS policy add-role-to-group edit system:serviceaccounts:cicd-$PRJ_SUFFIX -n stage-$PRJ_SUFFIX
+  $OC_COMMAND $ARG_OC_OPS policy add-role-to-group edit system:serviceaccounts:cicd-$PRJ_SUFFIX -n dev-$PRJ_SUFFIX
+  $OC_COMMAND $ARG_OC_OPS policy add-role-to-group edit system:serviceaccounts:cicd-$PRJ_SUFFIX -n stage-$PRJ_SUFFIX
 
   if [ $LOGGEDIN_USER == 'system:admin' ] ; then
-    oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n dev-$PRJ_SUFFIX >/dev/null 2>&1
-    oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n stage-$PRJ_SUFFIX >/dev/null 2>&1
-    oc $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n cicd-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n dev-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n stage-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS adm policy add-role-to-user admin $ARG_USERNAME -n cicd-$PRJ_SUFFIX >/dev/null 2>&1
     
-    oc $ARG_OC_OPS annotate --overwrite namespace dev-$PRJ_SUFFIX   demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
-    oc $ARG_OC_OPS annotate --overwrite namespace stage-$PRJ_SUFFIX demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
-    oc $ARG_OC_OPS annotate --overwrite namespace cicd-$PRJ_SUFFIX  demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS annotate --overwrite namespace dev-$PRJ_SUFFIX   demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS annotate --overwrite namespace stage-$PRJ_SUFFIX demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS annotate --overwrite namespace cicd-$PRJ_SUFFIX  demo=openshift-cd-$PRJ_SUFFIX >/dev/null 2>&1
 
-    oc $ARG_OC_OPS adm pod-network join-projects --to=cicd-$PRJ_SUFFIX dev-$PRJ_SUFFIX stage-$PRJ_SUFFIX >/dev/null 2>&1
+    $OC_COMMAND $ARG_OC_OPS adm pod-network join-projects --to=cicd-$PRJ_SUFFIX dev-$PRJ_SUFFIX stage-$PRJ_SUFFIX >/dev/null 2>&1
   fi
 
   sleep 2
 
-  oc new-app jenkins-ephemeral -n cicd-$PRJ_SUFFIX
+  $OC_COMMAND new-app jenkins-ephemeral -n cicd-$PRJ_SUFFIX
 
   sleep 2
 
   local template=https://raw.githubusercontent.com/$GITHUB_ACCOUNT/openshift-cd-demo/$GITHUB_REF/cicd-template.yaml
   echo "Using template $template"
-  oc $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX 
+  $OC_COMMAND $ARG_OC_OPS new-app -f $template -p DEV_PROJECT=dev-$PRJ_SUFFIX -p STAGE_PROJECT=stage-$PRJ_SUFFIX -p EPHEMERAL=$ARG_EPHEMERAL -p ENABLE_QUAY=$ARG_ENABLE_QUAY -p QUAY_USERNAME=$ARG_QUAY_USER -p QUAY_PASSWORD=$ARG_QUAY_PASS -n cicd-$PRJ_SUFFIX 
 }
 
 function make_idle() {
   echo_header "Idling Services"
-  oc $ARG_OC_OPS idle -n dev-$PRJ_SUFFIX --all
-  oc $ARG_OC_OPS idle -n stage-$PRJ_SUFFIX --all
-  oc $ARG_OC_OPS idle -n cicd-$PRJ_SUFFIX --all
+  $OC_COMMAND $ARG_OC_OPS idle -n dev-$PRJ_SUFFIX --all
+  $OC_COMMAND $ARG_OC_OPS idle -n stage-$PRJ_SUFFIX --all
+  $OC_COMMAND $ARG_OC_OPS idle -n cicd-$PRJ_SUFFIX --all
 }
 
 function make_unidle() {
@@ -186,10 +187,10 @@ function make_unidle() {
 
   for project in dev-$PRJ_SUFFIX stage-$PRJ_SUFFIX cicd-$PRJ_SUFFIX
   do
-    for dc in $(oc $ARG_OC_OPS get dc -n $project -o=custom-columns=:.metadata.name); do
-      local replicas=$(oc $ARG_OC_OPS get dc $dc --template='{{ index .metadata.annotations "idling.alpha.openshift.io/previous-scale"}}' -n $project 2>/dev/null)
+    for dc in $($OC_COMMAND $ARG_OC_OPS get dc -n $project -o=custom-columns=:.metadata.name); do
+      local replicas=$($OC_COMMAND $ARG_OC_OPS get dc $dc --template='{{ index .metadata.annotations "idling.alpha.openshift.io/previous-scale"}}' -n $project 2>/dev/null)
       if [[ $replicas =~ $_DIGIT_REGEX ]]; then
-        oc $ARG_OC_OPS scale --replicas=$replicas dc $dc -n $project
+        $OC_COMMAND $ARG_OC_OPS scale --replicas=$replicas dc $dc -n $project
       fi
     done
   done
@@ -197,7 +198,7 @@ function make_unidle() {
 
 function set_default_project() {
   if [ $LOGGEDIN_USER == 'system:admin' ] ; then
-    oc $ARG_OC_OPS project default >/dev/null
+    $OC_COMMAND $ARG_OC_OPS project default >/dev/null
   fi
 }
 
@@ -206,8 +207,8 @@ function remove_storage_claim() {
   local _VOLUME_NAME=$2
   local _CLAIM_NAME=$3
   local _PROJECT=$4
-  oc $ARG_OC_OPS volumes dc/$_DC --name=$_VOLUME_NAME --add -t emptyDir --overwrite -n $_PROJECT
-  oc $ARG_OC_OPS delete pvc $_CLAIM_NAME -n $_PROJECT >/dev/null 2>&1
+  $OC_COMMAND $ARG_OC_OPS volumes dc/$_DC --name=$_VOLUME_NAME --add -t emptyDir --overwrite -n $_PROJECT
+  $OC_COMMAND $ARG_OC_OPS delete pvc $_CLAIM_NAME -n $_PROJECT >/dev/null 2>&1
 }
 
 function echo_header() {
@@ -241,7 +242,7 @@ echo_header "OpenShift CI/CD Demo ($(date))"
 case "$ARG_COMMAND" in
     delete)
         echo "Delete demo..."
-        oc $ARG_OC_OPS delete project dev-$PRJ_SUFFIX stage-$PRJ_SUFFIX cicd-$PRJ_SUFFIX
+        $OC_COMMAND $ARG_OC_OPS delete project dev-$PRJ_SUFFIX stage-$PRJ_SUFFIX cicd-$PRJ_SUFFIX
         echo
         echo "Delete completed successfully!"
         ;;
