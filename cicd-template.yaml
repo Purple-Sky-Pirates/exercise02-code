@@ -44,6 +44,10 @@ parameters:
   name: QUAY_REPOSITORY
   required: true
   value: tasks-app
+- displayName: Quay.io Organisation/Top Level User
+  description: Quay.io Organisation
+  name: QUAY_ORG
+  required: true
 objects:
 - apiVersion: v1
   groupNames: null
